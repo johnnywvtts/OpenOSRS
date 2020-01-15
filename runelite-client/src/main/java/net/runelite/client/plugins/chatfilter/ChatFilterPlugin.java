@@ -38,10 +38,12 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.AccessLevel;
 import lombok.Setter;
+import net.runelite.api.ChatLineBuffer;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.MessageNode;
 import net.runelite.api.Player;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.OverheadTextChanged;
 import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.util.Text;
@@ -51,6 +53,7 @@ import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.PluginType;
+import net.runelite.client.util.ColorUtil;
 import org.apache.commons.lang3.StringUtils;
 
 @PluginDescriptor(
@@ -68,6 +71,9 @@ public class ChatFilterPlugin extends Plugin
 		.trimResults();
 
 	private static final String CENSOR_MESSAGE = "Hey, everyone, I just tried to say something very silly!";
+
+	private static final String MESSAGE_QUANTITY_PREFIX = " x ";
+	private static final int MESSAGE_QUANTITY_DEFAULT = 1;
 
 	private final CharMatcher jagexPrintableCharMatcher = Text.JAGEX_PRINTABLE_CHAR_MATCHER;
 	private final List<Pattern> filteredPatterns = new CopyOnWriteArrayList<>();
@@ -271,6 +277,89 @@ public class ChatFilterPlugin extends Plugin
 
 		//Refresh chat after config change to reflect current rules
 		client.refreshChat();
+	}
+
+	@Subscribe
+	public void onChatMessage(ChatMessage event)
+	{
+		if (!config.collapseChatMessages())
+		{
+			return;
+		}
+
+		collapseDuplicateMessages(event.getMessageNode());
+	}
+
+	private void collapseDuplicateMessages(MessageNode node)
+	{
+		MessageNode oldNode = findMessage(node);
+		if (oldNode == null)
+		{
+			return;
+		}
+		node.setValue(addMessageQuantity(oldNode.getValue()));
+		for (ChatLineBuffer b : client.getChatLineMap().values())
+		{
+			b.removeMessageNode(oldNode);
+		}
+		client.refreshChat();
+	}
+
+	private MessageNode findMessage(MessageNode node)
+	{
+		for (ChatLineBuffer b : client.getChatLineMap().values())
+		{
+			for (MessageNode m : b.getLines())
+			{
+				if (m != null && isEqual(m, node))
+				{
+					return m;
+				}
+			}
+		}
+		return null;
+	}
+
+	private boolean isEqual(MessageNode oldNode, MessageNode newNode)
+	{
+		return oldNode.getId() != newNode.getId() && oldNode.getType().equals(newNode.getType()) &&
+			Objects.equals(oldNode.getSender(), newNode.getSender()) &&
+			oldNode.getName().equals(newNode.getName()) &&
+			Text.removeTags(stripMessageQuantity(oldNode.getValue())).equals(newNode.getValue());
+	}
+
+	private String stripMessageQuantity(String message)
+	{
+		int quantity = findMessageQuantity(message);
+		if (quantity > MESSAGE_QUANTITY_DEFAULT)
+		{
+			String end = ColorUtil.colorTag(config.chatMessageCountColor()) + MESSAGE_QUANTITY_PREFIX + quantity;
+			if (message.endsWith(end) || message.endsWith(end + ColorUtil.CLOSING_COLOR_TAG))
+			{
+				// Jagex sometimes append "</col>" to the end of messages
+				return message.substring(0, message.lastIndexOf(end));
+			}
+		}
+		return message;
+	}
+
+	private String addMessageQuantity(String message)
+	{
+		int quantity = findMessageQuantity(message) + 1;
+		return stripMessageQuantity(message) + ColorUtil.colorTag(config.chatMessageCountColor()) +
+			MESSAGE_QUANTITY_PREFIX + quantity;
+	}
+
+	private int findMessageQuantity(String message)
+	{
+		String quantityPrefix = ColorUtil.colorTag(config.chatMessageCountColor()) + MESSAGE_QUANTITY_PREFIX;
+		int start = message.lastIndexOf(quantityPrefix);
+		if (start >= 0)
+		{
+			String quantity = Text.removeTags(message.substring(start + quantityPrefix.length()));
+			return Integer.parseInt(quantity);
+		}
+		return MESSAGE_QUANTITY_DEFAULT;
 	}
 
 	private void updateConfig()

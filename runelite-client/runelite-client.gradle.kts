@@ -70,6 +70,7 @@ dependencies {
     implementation(project(":http-api"))
     api(project(":runelite-api"))
     implementation(Libraries.naturalMouse)
+    implementation(Libraries.json)
 
     runtimeOnly(Libraries.trident)
     runtimeOnly(Libraries.jogampGluegenLinuxAmd64)

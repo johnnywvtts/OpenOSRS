@@ -126,6 +126,10 @@ public class ItemStatOverlay extends Overlay
 
 				for (final StatChange c : statsChanges.getStatChanges())
 				{
+					if (c.getPositivity() == Positivity.NO_CHANGE)
+					{
+						continue;
+					}
 					b.append(buildStatChangeString(c));
 				}
 

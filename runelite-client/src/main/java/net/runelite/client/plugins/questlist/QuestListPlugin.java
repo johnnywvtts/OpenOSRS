@@ -273,8 +273,8 @@ public class QuestListPlugin extends Plugin
 		updateList(QuestContainer.MEMBER_QUESTS, filter);
 		updateList(QuestContainer.MINI_QUESTS, filter);
 
-		memberList.setOriginalY(freeList.getOriginalY() + freeList.getOriginalHeight() + ENTRY_PADDING);
-		miniList.setOriginalY(memberList.getOriginalY() + memberList.getOriginalHeight() + ENTRY_PADDING);
+		memberList.setOriginalY(freeList.getOriginalY() + freeList.getOriginalHeight() + (freeList.getOriginalHeight() == 0 ? 0 : ENTRY_PADDING));
+		miniList.setOriginalY(memberList.getOriginalY() + memberList.getOriginalHeight() + (memberList.getOriginalHeight() == 0 ? 0 : ENTRY_PADDING));
 
 		// originalHeight is changed within updateList so revalidate all lists
 		freeList.revalidate();
@@ -378,7 +378,10 @@ public class QuestListPlugin extends Plugin
 			}
 		}
 
-		list.setOriginalHeight(y);
+		long hiddenCount = quests.stream()
+			.filter(q -> q.getQuest().isHidden())
+			.count();
+		list.setOriginalHeight(hiddenCount == quests.size() ? 0 : y);
 	}
 
 	@AllArgsConstructor
@@ -398,9 +401,9 @@ public class QuestListPlugin extends Plugin
 	{
 		NOT_STARTED(0xff0000, "Not started", SpriteID.MINIMAP_ORB_HITPOINTS),
 		IN_PROGRESS(0xffff00, "In progress", SpriteID.MINIMAP_ORB_HITPOINTS_DISEASE),
+		NOT_COMPLETED(0, "Not Completed", SpriteID.MINIMAP_ORB_RUN),
 		COMPLETE(0xdc10d, "Completed", SpriteID.MINIMAP_ORB_HITPOINTS_POISON),
-		ALL(0, "All", SpriteID.MINIMAP_ORB_PRAYER),
-		NOT_COMPLETED(0, "Not Completed", SpriteID.MINIMAP_ORB_RUN);
+		ALL(0, "All", SpriteID.MINIMAP_ORB_PRAYER);
 
 		private final int color;
 		private final String name;

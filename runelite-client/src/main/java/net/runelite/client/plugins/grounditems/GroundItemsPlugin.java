@@ -792,7 +792,8 @@ public class GroundItemsPlugin extends Plugin
 				final int count = e.getCount();
 				if (count > 1)
 				{
-					entry.setTarget(entry.getTarget() + " x " + count);
+					//entry.setTarget(entry.getTarget() + " x " + count);
+					entry.setTarget(entry.getTarget() + " [" + count + "]");
 				}
 			}
 

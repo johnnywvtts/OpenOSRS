@@ -239,4 +239,34 @@ public interface LootTrackerConfig extends Config
 	{
 		return false;
 	}
+
+	@ConfigItem(
+		keyName = "enable api",
+		name = "Enable api",
+		description = "update data to database with all ur kills.",
+		position = 6
+	)
+	default boolean getApiEnabled()
+	{
+		return false;
+	}
+
+
+	@ConfigItem(
+		keyName = "apiKey",
+		name = "Api key",
+		description = "update data to database with all ur kills.",
+		position = 7
+	)
+	default String getApiKey()
+	{
+		return "";
+	}
+
+	@ConfigItem(
+		keyName = "apiKey",
+		name = "",
+		description = ""
+	)
+	void setApiKey(String key);
 }

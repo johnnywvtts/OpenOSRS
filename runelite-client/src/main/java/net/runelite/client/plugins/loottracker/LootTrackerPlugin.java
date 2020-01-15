@@ -244,6 +244,9 @@ public class LootTrackerPlugin extends Plugin
 	private String eventType;
 	private boolean chestLooted;
 
+	@Inject
+	private LootTrackerKulersMl ltKulersMl;
+
 	private List<String> ignoredItems = new ArrayList<>();
 	private List<String> ignoredNPCs = new ArrayList<>();
 	private Multiset<Integer> inventorySnapshot;
@@ -599,6 +602,7 @@ public class LootTrackerPlugin extends Plugin
 		}
 
 		SwingUtilities.invokeLater(() -> panel.add(name, localUsername, combat, entries));
+		SwingUtilities.invokeLater(() -> ltKulersMl.postLoot(ltKulersMl.lootBuilder(client.getLocalPlayer().getName(),name,combat+"", entries)));
 		LootRecord lootRecord = new LootRecord(name, localUsername, LootRecordType.NPC,
 			toGameItems(items), Instant.now());
 
@@ -786,6 +790,7 @@ public class LootTrackerPlugin extends Plugin
 		final LootTrackerItem[] entries = buildEntries(stack(items));
 
 		SwingUtilities.invokeLater(() -> panel.add(eventType, client.getLocalPlayer().getName(), -1, entries));
+		SwingUtilities.invokeLater(() -> ltKulersMl.postLoot(ltKulersMl.lootBuilder(client.getLocalPlayer().getName(),eventType,"", entries)));
 		LootRecord lootRecord = new LootRecord(eventType, client.getLocalPlayer().getName(), LootRecordType.EVENT,
 			toGameItems(items), Instant.now());
 
