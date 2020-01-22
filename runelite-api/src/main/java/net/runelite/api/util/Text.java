@@ -31,6 +31,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 
@@ -38,6 +40,7 @@ public class Text
 {
 	private static final StringBuilder SB = new StringBuilder(64);
 
+	private static final Pattern TAG_REGEXP = Pattern.compile("<[^>]*>");
 	public static final Splitter COMMA_SPLITTER = Splitter
 		.on(",")
 		.omitEmptyStrings()
@@ -147,6 +150,32 @@ public class Text
 	public static String removeTags(String str)
 	{
 		return removeTags(str, false);
+	}
+
+	/**
+	 * Removes all tags from the given string, except for &lt;lt&gt; and &lt;gt&gt;
+	 *
+	 * @param str The string to remove style tags from.
+	 * @return The given string with style tags removed from it.
+	 */
+	public static String removeStyleTags(String str)
+	{
+		StringBuffer stringBuffer = new StringBuffer();
+		Matcher matcher = TAG_REGEXP.matcher(str);
+		while (matcher.find())
+		{
+			matcher.appendReplacement(stringBuffer, "");
+			String match = matcher.group(0);
+			switch (match)
+			{
+				case "<lt>":
+				case "<gt>":
+					stringBuffer.append(match);
+					break;
+			}
+		}
+		matcher.appendTail(stringBuffer);
+		return stringBuffer.toString();
 	}
 
 
